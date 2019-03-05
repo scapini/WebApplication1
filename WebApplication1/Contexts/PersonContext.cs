@@ -9,20 +9,24 @@ namespace WebApplication1.Contexts
 {
     public class PersonContext : DbContext
     {
-        public PersonContext()
+        public PersonContext(DbContextOptions<PersonContext> options) : base(options)
         {
+            System.Console.Out.Write("Hello");
+
         }
         public DbSet<Person> Persons { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=mydb;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False");
-        }
     }
 
+    // How do I use this ?? Won't let me inject PersonContext ??
     public class PersonRepository : IDisposable
     {
-        private PersonContext db = new PersonContext();
+        private PersonContext db; //= new PersonContext();
+
+        public PersonRepository()
+        {
+        //    this.db = db;
+        }
 
         public IEnumerable<Person> GetAll()
         {

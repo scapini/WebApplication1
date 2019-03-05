@@ -15,11 +15,20 @@ namespace WebApplication1.Controllers
     {
 
         PersonRepository pr = new PersonRepository();
+        PersonContext pc;
+
+        public PeopleController(PersonContext pc)
+        {
+            this.pc = pc;
+        }
         // GET: api/<controller>
         [HttpGet]
         public IEnumerable<Person> Get()
         {
-            return pr.GetAll();
+            var ret =  pc.Persons;
+
+            return ret;
+            //return pr.GetAll();
         }
 
         // GET api/<controller>/5
@@ -40,7 +49,9 @@ namespace WebApplication1.Controllers
         [HttpPost]
         public void Post([FromBody]Person per)
         {
-            pr.Add(per);
+            pc.Add<Person>(per);
+            pc.SaveChanges();
+            //pr.Add(per);
         }
 
         // PUT api/<controller>/5

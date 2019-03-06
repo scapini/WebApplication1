@@ -29,7 +29,9 @@ namespace WebApplication1
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddDbContext<PersonContext>(context => context.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContext<DbContext>(context => context.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             services.AddHttpClient();
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
         }
 

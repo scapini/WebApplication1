@@ -7,6 +7,10 @@ using WebApplication1.Model;
 
 namespace WebApplication1.Contexts
 {
+    /*
+     * Core DB context. Seems to create anything with a DbSet.
+     * Somehow. 
+     */
     public class PersonContext : DbContext
     {
         public PersonContext(DbContextOptions<PersonContext> options) : base(options)
@@ -15,6 +19,7 @@ namespace WebApplication1.Contexts
 
         }
         public DbSet<Person> Persons { get; set; }
+        public DbSet<Albums> Albums { get; set; }
 
     }
 

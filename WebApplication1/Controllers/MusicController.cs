@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using WebApplication1.Contexts;
+using WebApplication1.Model;
 
 namespace WebApplication1.Controllers
 {
@@ -17,26 +19,31 @@ namespace WebApplication1.Controllers
     {
         private readonly IHttpClientFactory http;
 
-        public class Music {
-            public string artistName { get; set; }
-            public string collectionName { get; set; }
-            public int artistId { get; set; }
-        }
-
-        public class Results
+        public class Wrapper
         {
-            public int resultCount { get; set; }
-            public IEnumerable<Music> results { get; set; }
+            public int ResultCount { get; set; }
+            public IEnumerable<Albums> Results { get; set; }
         }
 
-        public MusicController(IHttpClientFactory fact)
+        private IRepository<Albums> albums;
+        private PersonContext pc;
+
+        public MusicController(IHttpClientFactory fact, IRepository<Albums> rep, PersonContext pc)
         {
             this.http = fact;
+            this.albums = rep;
+            this.pc = pc;
         }
-        // GET: api/Music
+        // GET: api/Music  get albums.
+        /// <summary>
+        /// Get albums (store them as well, for laughs).
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [Route("artist/{id}")]
-        public async Task<Results> Get(string id)
+        public async Task<Wrapper> Get(string id)
         {
+            /* Hopefully formats URL correctly */
             String url = QueryHelpers.AddQueryString("https://itunes.apple.com/lookup?entity=album", "id", id);
             var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Add("Accept", "application/json");
@@ -46,14 +53,24 @@ namespace WebApplication1.Controllers
             var response = await client.SendAsync(request);
             response.EnsureSuccessStatusCode();
 
+            /* itunes doesn't send application/json */
             var xx = new JsonMediaTypeFormatter();
             xx.SupportedMediaTypes.Add(new MediaTypeHeaderValue("text/javascript"));
-            var result = await response.Content.ReadAsAsync<Results>(new[] { xx });
+            var result = await response.Content.ReadAsAsync<Wrapper>(new[] { xx });
+
+            foreach (var album in result.Results) {
+                //albums.Insert(album);
+                if (album.CollectionId != 0)
+                {
+                    pc.Albums.Update(album);
+                }
+            }
+            pc.SaveChanges();
             return result;
         }
 
         [Route("artist")]
-        public async Task<Results> GetArtist([FromQuery] string name)
+        public async Task<Wrapper> GetArtist([FromQuery] string name)
         {
             String url = QueryHelpers.AddQueryString("https://itunes.apple.com/search?entity=musicArtist", "term", name);
             var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -66,7 +83,7 @@ namespace WebApplication1.Controllers
 
             var xx = new JsonMediaTypeFormatter();
             xx.SupportedMediaTypes.Add(new MediaTypeHeaderValue("text/javascript"));
-            var result = await response.Content.ReadAsAsync<Results>(new[] { xx });
+            var result = await response.Content.ReadAsAsync<Wrapper>(new[] { xx });
             return result;
         }
 

@@ -12,6 +12,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using WebApplication1.Contexts;
 using Microsoft.EntityFrameworkCore;
+using WebApplication1.Services;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace WebApplication1
 {
@@ -32,6 +36,18 @@ namespace WebApplication1
             services.AddDbContext<DbContext>(context => context.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             services.AddHttpClient();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddScoped<IITunesService, ITunesService>();
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(cfg => {
+                cfg.RequireHttpsMetadata = false;
+                cfg.SaveToken = true;
+                cfg.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidIssuer = Configuration["Tokens:Issuer"],
+                    ValidAudience = Configuration["Tokens:Issuer"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Tokens:Key"]))
+                };
+            });
 
         }
 
@@ -47,6 +63,7 @@ namespace WebApplication1
                 app.UseHsts();
             }
 
+            app.UseAuthentication();
             app.UseHttpsRedirection();
             app.UseMvc();
         }

@@ -16,6 +16,8 @@ namespace WebApplication1.Contexts
         internal DbContext context;
         internal DbSet<Entity> ents;
 
+        public Repository() { }
+
         public Repository(DbContext pc)
         {
             this.context = pc;

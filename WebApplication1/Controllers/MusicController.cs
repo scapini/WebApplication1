@@ -17,7 +17,7 @@ namespace WebApplication1.Controllers
     [ApiController]
     public class MusicController : ControllerBase
     {
-        private readonly IHttpClientFactory http;
+        private  IHttpClientFactory http;
 
         public class Wrapper
         {
@@ -27,6 +27,7 @@ namespace WebApplication1.Controllers
 
         private IRepository<Albums> albums;
         private PersonContext pc;
+
 
         public MusicController(IHttpClientFactory fact, IRepository<Albums> rep, PersonContext pc)
         {
@@ -48,7 +49,7 @@ namespace WebApplication1.Controllers
             var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Add("Accept", "application/json");
 
-            var client = http.CreateClient();
+            var client = http.CreateClient("");
 
             var response = await client.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -62,7 +63,10 @@ namespace WebApplication1.Controllers
                 //albums.Insert(album);
                 if (album.CollectionId != 0)
                 {
-                    pc.Albums.Update(album);
+                    if (!pc.Albums.Any(x => x.CollectionId == album.CollectionId))
+                    {
+                        pc.Albums.Add(album);
+                    }
                 }
             }
             pc.SaveChanges();
@@ -78,7 +82,7 @@ namespace WebApplication1.Controllers
 
             var client = http.CreateClient();
 
-            var response = await client.SendAsync(request);
+            HttpResponseMessage response = await client.SendAsync(request);
             response.EnsureSuccessStatusCode();
 
             var xx = new JsonMediaTypeFormatter();

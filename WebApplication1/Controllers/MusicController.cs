@@ -5,115 +5,62 @@ using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using WebApplication1.Contexts;
 using WebApplication1.Model;
+using WebApplication1.Services;
 
+/// <summary>
+/// Trivial authenticated controller for 'itunes' music.
+/// </summary>
 namespace WebApplication1.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class MusicController : ControllerBase
     {
-        private  IHttpClientFactory http;
-
-        public class Wrapper
-        {
-            public int ResultCount { get; set; }
-            public IEnumerable<Albums> Results { get; set; }
-        }
+        private readonly IHttpClientFactory http;
 
         private IRepository<Albums> albums;
         private PersonContext pc;
+        private IITunesService itunes;
 
-
-        public MusicController(IHttpClientFactory fact, IRepository<Albums> rep, PersonContext pc)
+        public MusicController(IHttpClientFactory fact, IRepository<Albums> rep, PersonContext pc,
+            IITunesService itunes)
         {
             this.http = fact;
             this.albums = rep;
             this.pc = pc;
+            this.itunes = itunes;
         }
+
         // GET: api/Music  get albums.
         /// <summary>
-        /// Get albums (store them as well, for laughs).
+        /// Get albums for an artist
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         [Route("artist/{id}")]
         public async Task<Wrapper> Get(string id)
         {
-            /* Hopefully formats URL correctly */
-            String url = QueryHelpers.AddQueryString("https://itunes.apple.com/lookup?entity=album", "id", id);
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Add("Accept", "application/json");
+            return await itunes.GetAlbums(id);
 
-            var client = http.CreateClient("");
-
-            var response = await client.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-
-            /* itunes doesn't send application/json */
-            var xx = new JsonMediaTypeFormatter();
-            xx.SupportedMediaTypes.Add(new MediaTypeHeaderValue("text/javascript"));
-            var result = await response.Content.ReadAsAsync<Wrapper>(new[] { xx });
-
-            foreach (var album in result.Results) {
-                //albums.Insert(album);
-                if (album.CollectionId != 0)
-                {
-                    if (!pc.Albums.Any(x => x.CollectionId == album.CollectionId))
-                    {
-                        pc.Albums.Add(album);
-                    }
-                }
-            }
-            pc.SaveChanges();
-            return result;
         }
 
+        /// <summary>
+        /// Search for an artist,
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         [Route("artist")]
         public async Task<Wrapper> GetArtist([FromQuery] string name)
         {
-            String url = QueryHelpers.AddQueryString("https://itunes.apple.com/search?entity=musicArtist", "term", name);
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Add("Accept", "application/json");
-
-            var client = http.CreateClient();
-
-            HttpResponseMessage response = await client.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-
-            var xx = new JsonMediaTypeFormatter();
-            xx.SupportedMediaTypes.Add(new MediaTypeHeaderValue("text/javascript"));
-            var result = await response.Content.ReadAsAsync<Wrapper>(new[] { xx });
-            return result;
+            return await itunes.GetArtist(name);
         }
 
-        // GET: api/Music/5
-        [HttpGet("{id}", Name = "Get")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
-        // POST: api/Music
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-        // PUT: api/Music/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
     }
 }

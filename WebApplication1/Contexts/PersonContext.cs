@@ -19,8 +19,10 @@ namespace WebApplication1.Contexts
             System.Console.Out.Write("Hello");
 
         }
-        public DbSet<Person> Persons { get; set; }
-        public DbSet<Albums> Albums { get; set; }
+
+        // Make it virtual for unit tesing
+        public virtual DbSet<Person> Persons { get; set; }
+        public virtual DbSet<Albums> Albums { get; set; }
 
     }
 

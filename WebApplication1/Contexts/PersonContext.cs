@@ -9,14 +9,12 @@ namespace WebApplication1.Contexts
 {
     /*
      * Core DB context. Seems to create anything with a DbSet.
-     * Somehow. 
      */
     public class PersonContext : DbContext
     {
         public PersonContext() { }
         public PersonContext(DbContextOptions<PersonContext> options) : base(options)
         {
-            System.Console.Out.Write("Hello");
 
         }
 

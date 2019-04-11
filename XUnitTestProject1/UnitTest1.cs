@@ -84,19 +84,22 @@ namespace XUnitTestProject1
 
             // Mock repository
             var mockSet = new Mock<DbSet<Albums>>();
-            IQueryable<Albums> empty = new List<Albums>().AsQueryable();
+            var aList = new List<Albums>();
+            IQueryable<Albums> empty = aList.AsQueryable();
 
             // Return an actual queryable list.
             mockSet.As<IQueryable<Albums>>().Setup(m => m.Provider).Returns(empty.Provider);
             mockSet.As<IQueryable<Albums>>().Setup(m => m.Expression).Returns(empty.Expression);
             mockSet.As<IQueryable<Albums>>().Setup(m => m.ElementType).Returns(empty.ElementType);
             mockSet.As<IQueryable<Albums>>().Setup(m => m.GetEnumerator()).Returns(empty.GetEnumerator());
-
+            mockSet.Setup(d => d.Add(It.IsAny<Albums>())).Callback<Albums>((s) => aList.Add(s));
             mockContext.Setup(m => m.Albums).Returns(mockSet.Object);
 
             var ret = await music.GetAlbums("zztop");
 
             Assert.Equal(1, ret.ResultCount);
+            Assert.Single(aList);
+
 
             // Verify correct object stored.
             mockSet.Verify(x => x.Add(It.Is<Albums>(a => a.ArtistId == 1 && a.CollectionId == 2 && a.CollectionName == "album")));
